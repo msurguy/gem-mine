@@ -1,163 +1,195 @@
 import { describe, expect, it } from "vitest";
 import {
+  GEMS_PER_ROCK,
+  GEMS_PER_STAR,
   acceptsKey,
+  drillReady,
   initialProgress,
-  makeExpedition,
+  isUnlocked,
+  makeRun,
+  nextLevel,
   reducer,
   selectPrompts,
+  starsFor,
 } from "./game";
-import type { Mode } from "./game";
-import { lessons, parseWords, schoolLists } from "./curriculum";
-const start = (mode: Mode = "keys", word = "a") =>
+import type { ProgressV2 } from "./game";
+import { keyPrompts, learnedBefore, levels, typeKeys } from "./curriculum";
+import { DRILL_CHARGE, DRILL_COST, ENERGY_PER_ROCK, START_ENERGY } from "./dig";
+
+const type = (p: ProgressV2, text: string) =>
+  [...text].reduce((s, key) => reducer(s, { type: "key", key }), p);
+const start = (prompts: string[], mode: "keys" | "words" | "spell" = "keys") =>
   reducer(initialProgress(), {
     type: "start",
-    expedition: makeExpedition(
-      mode,
-      "Test",
-      Array(10).fill(word),
-      "test-expedition",
-    ),
+    run: makeRun(mode, levels[0].id, "Test", prompts, "run-1"),
   });
-describe("typing and expedition rewards", () => {
-  it("gives gentle wrong-key feedback without taking ore or advancing", () => {
-    const p = reducer(start(), { type: "key", key: "x" });
-    expect(p.active?.position).toBe(0);
-    expect(p.ore).toBe(0);
-    expect(p.keyStats.a).toEqual({ attempts: 1, correct: 0 });
-    expect(p.active?.feedback).toContain("take your time");
+
+describe("levels", () => {
+  it("teach every key once and only ask for keys already met", () => {
+    const taught = levels.flatMap((l) => [...l.newKeys]);
+    expect(new Set(taught).size).toBe(taught.length);
+    for (const level of levels.filter((l) => !l.words)) {
+      const allowed = new Set(learnedBefore(level) + level.newKeys);
+      const prompts = keyPrompts(level);
+      expect(prompts).toHaveLength(10);
+      for (const prompt of prompts) {
+        expect(
+          [...prompt].every((k) => allowed.has(k) && typeKeys.has(k)),
+        ).toBe(true);
+        expect([...prompt].some((k) => level.newKeys.includes(k))).toBe(true);
+      }
+    }
   });
-  it("accepts uppercase and curved apostrophes, requiring every character", () => {
-    let p = start("words", "I'll");
-    for (const key of ["I", "’", "L"]) p = reducer(p, { type: "key", key });
-    expect(p.ore).toBe(0);
-    expect(p.active?.position).toBe(3);
-    p = reducer(p, { type: "key", key: "L" });
-    expect(p.ore).toBe(5);
-    expect(p.active?.index).toBe(1);
+  it("open one at a time unless every level is opened", () => {
+    let p = initialProgress();
+    expect(isUnlocked(p, levels[0].id)).toBe(true);
+    expect(isUnlocked(p, levels[1].id)).toBe(false);
+    expect(nextLevel(p)).toBe(levels[0]);
+    p = { ...p, levelStars: { [levels[0].id]: 1 } };
+    expect(isUnlocked(p, levels[1].id)).toBe(true);
+    expect(nextLevel(p)).toBe(levels[1]);
+    p = reducer(initialProgress(), {
+      type: "settings",
+      settings: { unlockAll: true },
+    });
+    expect(isUnlocked(p, levels[levels.length - 1].id)).toBe(true);
   });
-  it("awards exactly one gem and ten ore for ten letter rocks", () => {
-    let p = start();
-    for (let i = 0; i < 10; i++) p = reducer(p, { type: "key", key: "a" });
+});
+
+describe("typing a run", () => {
+  it("counts hits and misses, and pays gems and dig power for each rock", () => {
+    let p = start(["f", "jf"]);
+    p = type(p, "x");
+    expect(p.active).toMatchObject({ index: 0, misses: 1, hits: 0 });
+    p = type(p, "f");
+    expect(p.active).toMatchObject({ index: 1, position: 0, hits: 1 });
+    expect(p.gems).toBe(GEMS_PER_ROCK);
+    expect(p.energy).toBe(START_ENERGY + ENERGY_PER_ROCK);
+    expect(p.keyStats.f).toEqual({ attempts: 2, correct: 1 });
+    expect(p.stats).toEqual({});
+  });
+  it("finishes with stars, bonus gems and a result, exactly once", () => {
+    let p = type(start(["f", "j"]), "fj");
     expect(p.active).toBeNull();
-    expect(p.ore).toBe(10);
-    expect(p.gems).toBe(1);
-    expect(p.expeditions).toBe(1);
-    expect(p.rocks).toBe(10);
-    expect(reducer(p, { type: "key", key: "a" })).toEqual(p);
-    expect(reducer(p, { type: "submit" })).toEqual(p);
+    expect(p.lastResult).toMatchObject({
+      id: "run-1",
+      stars: 3,
+      best: true,
+      gems: 2 * GEMS_PER_ROCK + 3 * GEMS_PER_STAR,
+    });
+    expect(p.gems).toBe(2 * GEMS_PER_ROCK + 3 * GEMS_PER_STAR);
+    expect(p.levelStars[levels[0].id]).toBe(3);
+    expect(p.runs).toBe(1);
+    expect(type(p, "f")).toBe(p);
+    p = reducer(p, { type: "clear-result" });
+    expect(p.lastResult).toBeNull();
   });
-  it("does not restart an unfinished expedition", () => {
-    const p = start();
-    expect(
-      reducer(p, {
-        type: "start",
-        expedition: makeExpedition("words", "Other", Array(10).fill("gem")),
-      }),
-    ).toBe(p);
+  it("keeps the best stars when a later try is worse", () => {
+    let p = type(start(["f"]), "f");
+    p = reducer(p, {
+      type: "start",
+      run: makeRun("keys", levels[0].id, "Test", ["f"], "run-2"),
+    });
+    p = type(p, "xxxxf");
+    expect(p.lastResult).toMatchObject({ stars: 1, best: false });
+    expect(p.levelStars[levels[0].id]).toBe(3);
   });
-  it("filters held keys, shortcuts, composing input and non-letter keys", () => {
+  it("gives stars for accuracy, and always at least one", () => {
+    const run = makeRun("keys", "a", "A", ["f"]);
+    expect(starsFor({ ...run, hits: 10, misses: 1 })).toBe(3);
+    expect(starsFor({ ...run, hits: 8, misses: 2 })).toBe(2);
+    expect(starsFor({ ...run, hits: 1, misses: 9 })).toBe(1);
+    const spell = makeRun("spell", "a", "A", ["a", "b", "c", "d", "e"]);
+    expect(starsFor({ ...spell, clean: 4 })).toBe(3);
+    expect(starsFor({ ...spell, clean: 3 })).toBe(2);
+    expect(starsFor({ ...spell, clean: 0 })).toBe(1);
+  });
+  it("records word practice and is not case sensitive", () => {
+    const p = type(start(["I'll", "gem"], "words"), "i’ll");
+    expect(p.active?.index).toBe(1);
+    expect(p.stats["i'll"]).toMatchObject({
+      attempts: 4,
+      correct: 4,
+      completed: 1,
+    });
+  });
+  it("ignores held keys, shortcuts and keys outside the game", () => {
     const e = {
-      key: "a",
+      key: "f",
       repeat: false,
       ctrlKey: false,
-      altKey: false,
       metaKey: false,
+      altKey: false,
     };
     expect(acceptsKey(e)).toBe(true);
-    for (const patch of [
-      { repeat: true },
-      { ctrlKey: true },
-      { metaKey: true },
-      { altKey: true },
-      { isComposing: true },
-      { key: "Tab" },
-      { key: "Enter" },
-    ])
-      expect(acceptsKey({ ...e, ...patch })).toBe(false);
+    expect(acceptsKey({ ...e, repeat: true })).toBe(false);
+    expect(acceptsKey({ ...e, metaKey: true })).toBe(false);
+    expect(acceptsKey({ ...e, key: "Tab" })).toBe(false);
   });
 });
-describe("spelling is tracked separately", () => {
-  it("records first-try unaided success without affecting physical key accuracy", () => {
-    let p = start("spell", "each");
-    p = reducer(p, { type: "spell-input", value: "EACH" });
-    p = reducer(p, { type: "submit" });
-    expect(p.stats.each.unaided).toBe(1);
-    expect(p.stats.each.spellingAttempts).toBe(1);
-    expect(p.keyStats).toEqual({});
-    expect(p.ore).toBe(5);
+
+describe("spelling", () => {
+  const spell = (p: ProgressV2, value: string) =>
+    reducer(reducer(p, { type: "spell-input", value }), { type: "submit" });
+  it("counts a first-try word as unaided", () => {
+    const p = spell(start(["gem", "dig"], "spell"), " Gem ");
+    expect(p.active).toMatchObject({ index: 1, clean: 1, typed: "" });
+    expect(p.stats.gem).toMatchObject({ unaided: 1, spellingAttempts: 1 });
   });
-  it("does not count a revealed answer as unaided", () => {
-    let p = start("spell", "each");
-    p = reducer(p, { type: "hint" });
-    p = reducer(p, { type: "spell-input", value: "each" });
-    p = reducer(p, { type: "submit" });
-    expect(p.stats.each.unaided).toBe(0);
-    expect(p.stats.each.spellingAttempts).toBe(1);
-    expect(p.active?.assisted).toBe(false);
+  it("shows the word after two misses and does not count it as unaided", () => {
+    let p = spell(start(["gem", "dig"], "spell"), "jem");
+    expect(p.active).toMatchObject({ mistakes: 1, assisted: false, typed: "" });
+    p = spell(p, "gim");
+    expect(p.active?.assisted).toBe(true);
+    p = spell(p, "gem");
+    expect(p.active).toMatchObject({ index: 1, clean: 0, assisted: false });
+    expect(p.stats.gem).toMatchObject({ unaided: 0, spellingAttempts: 1 });
   });
-  it("does not count corrected spelling as first-try success", () => {
-    let p = start("spell", "each");
-    p = reducer(p, { type: "spell-input", value: "eech" });
-    p = reducer(p, { type: "submit" });
-    expect(p.ore).toBe(0);
-    expect(p.active?.typed).toBe("eech");
-    p = reducer(p, { type: "spell-input", value: "each" });
-    p = reducer(p, { type: "submit" });
-    expect(p.stats.each.unaided).toBe(0);
-    expect(p.stats.each.completed).toBe(1);
+  it("lets a hint show the word", () => {
+    const p = reducer(start(["gem"], "spell"), { type: "hint" });
+    expect(p.active?.assisted).toBe(true);
+    expect(spell(p, "gem").lastResult?.stars).toBe(1);
   });
 });
-describe("progression and curriculum", () => {
-  it("never overspends, and equipping owned tools is free", () => {
+
+describe("words and shop", () => {
+  it("selects ten prompts and repeats a short list only when it runs out", () => {
+    const prompts = selectPrompts(["a", "b", "c"], {}, () => 0);
+    expect(prompts).toHaveLength(10);
+    expect(new Set(prompts.slice(0, 3)).size).toBe(3);
+    expect(() => selectPrompts([], {})).toThrow();
+  });
+  it("buys tools and stickers only when there are enough gems", () => {
     let p = initialProgress();
     expect(reducer(p, { type: "tool", id: "copper" })).toBe(p);
-    p = { ...p, ore: 40 };
+    expect(reducer(p, { type: "decoration", id: "fern" })).toBe(p);
+    p = { ...p, gems: 50 };
     p = reducer(p, { type: "tool", id: "copper" });
-    expect(p.ore).toBe(20);
+    expect(p).toMatchObject({ gems: 20, selectedTool: "copper" });
+    p = reducer(p, { type: "decoration", id: "fern" });
+    expect(p).toMatchObject({ gems: 5, ownedDecorations: ["fern"] });
+    expect(reducer(p, { type: "decoration", id: "fern" })).toBe(p);
     p = reducer(p, { type: "tool", id: "starter" });
-    p = reducer(p, { type: "tool", id: "copper" });
-    expect(p.ore).toBe(20);
+    expect(p).toMatchObject({ gems: 5, selectedTool: "starter" });
   });
-  it("unlocks caves only at their thresholds", () => {
-    const p = initialProgress();
-    expect(reducer(p, { type: "cave", id: "crystal" })).toBe(p);
-    expect(
-      reducer({ ...p, expeditions: 3 }, { type: "cave", id: "crystal" })
-        .selectedCave,
-    ).toBe("crystal");
+  it("sells the drill for 100 gems and powers it with ten finished levels", () => {
+    let p: ProgressV2 = { ...initialProgress(), gems: DRILL_COST - 1 };
+    expect(reducer(p, { type: "drill" })).toBe(p);
+    p = reducer({ ...p, gems: DRILL_COST }, { type: "drill" });
+    expect(p).toMatchObject({ gems: 0, drill: { owned: true, charge: 0 } });
+    expect(drillReady(p)).toBe(false);
+    for (let i = 0; i < DRILL_CHARGE; i++) {
+      p = reducer(p, {
+        type: "start",
+        run: makeRun("keys", levels[0].id, "Test", ["f"], `run-${i}`),
+      });
+      p = type(p, "f");
+    }
+    expect(p.drill.charge).toBe(DRILL_CHARGE);
+    expect(drillReady(p)).toBe(true);
   });
-  it("charges for decorations once and restores owned choices freely", () => {
-    let p = { ...initialProgress(), gems: 6 };
-    p = reducer(p, { type: "decoration", slot: "pet", id: "snail" });
-    p = reducer(p, { type: "decoration", slot: "pet", id: "fox" });
-    expect(p.gems).toBe(0);
-    p = reducer(p, { type: "decoration", slot: "pet", id: "snail" });
-    expect(p.gems).toBe(0);
-    expect(p.placed.pet).toBe("snail");
-  });
-  it("has 120 school entries and covers every alphabet key", () => {
-    expect(schoolLists).toHaveLength(10);
-    expect(schoolLists.flatMap((l) => l.words)).toHaveLength(120);
-    const keys = lessons.map((l) => l.keys).join("");
-    for (const c of "abcdefghijklmnopqrstuvwxyz'") expect(keys).toContain(c);
-  });
-  it("previews comma/newline lists and normalizes apostrophes", () => {
-    expect(parseWords("cat, dog\ncat\nI’ll")).toEqual(["cat", "dog", "I'll"]);
-  });
-  it("samples ten prompts, weighting difficult words and cycling short pools", () => {
-    const stats = {
-      hard: {
-        attempts: 5,
-        correct: 0,
-        completed: 0,
-        unaided: 0,
-        spellingAttempts: 0,
-      },
-    };
-    expect(selectPrompts(["easy", "hard"], stats, () => 0.4)[0]).toBe("hard");
-    expect(selectPrompts(["a"], {}, () => 0)).toEqual(Array(10).fill("a"));
-    expect(
-      new Set(selectPrompts(schoolLists[0].words, {}, () => 0.5)).size,
-    ).toBe(10);
+  it("does not charge a drill that has not been bought", () => {
+    const p = type(start(["f"]), "f");
+    expect(p.drill).toEqual({ owned: false, charge: 0 });
   });
 });

@@ -54,170 +54,163 @@ export const schoolLists: WordList[] = rows.map(([date, title, words]) => ({
   title,
   words: words.split(", "),
 }));
-export const lessons = [
-  {
-    id: "home",
-    title: "Home row",
-    keys: "asdfghjkl",
-    hint: "Find the little bumps on F and J. Rest your index fingers there.",
-  },
-  {
-    id: "upper",
-    title: "Upper row",
-    keys: "qwertyuiop",
-    hint: "Reach up from your home row, then bring your fingers back.",
-  },
-  {
-    id: "lower",
-    title: "Lower row",
-    keys: "zxcvbnm",
-    hint: "Reach down gently. There is no need to hurry.",
-  },
-  {
-    id: "apostrophe",
-    title: "Apostrophes",
-    keys: "'",
-    hint: "Your right pinky finds the apostrophe, beside the Enter key.",
-  },
-  {
-    id: "digits",
-    title: "Number row",
-    keys: "1234567890",
-    hint: "Reach up from your home keys.",
-  },
-  {
-    id: "marks",
-    title: "Punctuation",
-    keys: ",./;'[]-=",
-    hint: "Use your right hand for these marks.",
-  },
-];
-export const quarryKeys = new Set(
-  lessons.flatMap((lesson) => [...lesson.keys]),
-);
-export const tools = [
-  {
-    id: "starter",
-    name: "Trusty pick",
-    cost: 0,
-    color: "#a9c2c5",
-    description: "Every adventure starts here.",
-  },
-  {
-    id: "copper",
-    name: "Copper pick",
-    cost: 20,
-    color: "#dca080",
-    description: "A warm copper shine.",
-  },
-  {
-    id: "jade",
-    name: "Jade pick",
-    cost: 40,
-    color: "#96d5a5",
-    description: "A little forest magic.",
-  },
-  {
-    id: "gold",
-    name: "Golden pick",
-    cost: 80,
-    color: "#f4d17c",
-    description: "A sunbeam in the cave.",
-  },
-  {
-    id: "amethyst",
-    name: "Amethyst pick",
-    cost: 120,
-    color: "#c3a4e4",
-    description: "Made for purple discoveries.",
-  },
-  {
-    id: "diamond",
-    name: "Diamond pick",
-    cost: 200,
-    color: "#a3e3f1",
-    description: "Your brightest adventure yet.",
-  },
-];
-export const caves = [
+export interface World {
+  id: string;
+  name: string;
+  tagline: string;
+  art: string;
+}
+export const worlds: World[] = [
   {
     id: "moss",
     name: "Mossy Hollow",
-    at: 0,
-    color: "#91bca1",
-    description: "Where your adventure begins",
+    tagline: "Home keys",
+    art: "./art/bg-moss.jpg",
   },
   {
     id: "crystal",
     name: "Crystal Cavern",
-    at: 3,
-    color: "#9abddb",
-    description: "A hidden world of blue",
+    tagline: "Top row",
+    art: "./art/crystal-grotto.jpg",
   },
   {
     id: "amber",
     name: "Amber Grotto",
-    at: 8,
-    color: "#dab67c",
-    description: "A cave full of golden light",
+    tagline: "Bottom row",
+    art: "./art/bg-amber.jpg",
   },
   {
     id: "moon",
     name: "Moonstone Deep",
-    at: 15,
-    color: "#bba8d7",
-    description: "Something extraordinary awaits",
+    tagline: "Numbers and marks",
+    art: "./art/bg-moon.jpg",
   },
 ];
+export interface Level {
+  id: string;
+  world: string;
+  /** Short label for the map stone, such as "F J". */
+  label: string;
+  title: string;
+  /** Keys this level teaches for the first time. */
+  newKeys: string;
+  /** Real words to type instead of key patterns. */
+  words?: string[];
+}
+const key = (world: string, newKeys: string): Level => ({
+  id: `${world}-${newKeys}`,
+  world,
+  label: [...newKeys].join(" ").toUpperCase(),
+  title: [...newKeys].map((k) => k.toUpperCase()).join(" and "),
+  newKeys,
+});
+const wordLevel = (world: string, title: string, list: string): Level => ({
+  id: `${world}-words`,
+  world,
+  label: "abc",
+  title,
+  newKeys: "",
+  words: list.split(" "),
+});
+export const levels: Level[] = [
+  key("moss", "fj"),
+  key("moss", "dk"),
+  key("moss", "sl"),
+  key("moss", "a;"),
+  key("moss", "gh"),
+  wordLevel(
+    "moss",
+    "Home row words",
+    "dad sad ask add all fall hall flag glad glass salad flash dash has had shall half",
+  ),
+  key("crystal", "ei"),
+  key("crystal", "ru"),
+  key("crystal", "ty"),
+  key("crystal", "wo"),
+  key("crystal", "qp"),
+  wordLevel(
+    "crystal",
+    "Top row words",
+    "the you were write pretty tired quiet purple yellow little other people sister start play laugh",
+  ),
+  key("amber", "vm"),
+  key("amber", "bn"),
+  key("amber", "c,"),
+  key("amber", "x."),
+  { ...key("amber", "z"), label: "Z", title: "Z" },
+  wordLevel(
+    "amber",
+    "Every letter words",
+    "zebra mix cave gem number move become magic zoom box never brave crystal jump cabin diamond",
+  ),
+  { ...key("moon", "4567"), title: "4, 5, 6 and 7" },
+  { ...key("moon", "123"), title: "1, 2 and 3" },
+  { ...key("moon", "890"), title: "8, 9 and 0" },
+  { ...key("moon", "'-"), title: "Apostrophe and dash" },
+  wordLevel(
+    "moon",
+    "Apostrophe words",
+    "don't it's I'll can't we're isn't you're he's she's that's didn't let's",
+  ),
+];
+/** Every key the game can ask for. */
+export const typeKeys = new Set([
+  ..."abcdefghijklmnopqrstuvwxyz1234567890,./;'[]-=",
+]);
+/** Keys taught before this level, oldest first. */
+export function learnedBefore(level: Level) {
+  return levels
+    .slice(0, levels.indexOf(level))
+    .map((l) => l.newKeys)
+    .join("");
+}
+/**
+ * Ten rocks for a key level: single new keys first, then short patterns of
+ * the new keys, then patterns that mix in keys from earlier levels.
+ */
+export function keyPrompts(level: Level, random = Math.random): string[] {
+  const fresh = [...level.newKeys],
+    old = [...learnedBefore(level)].slice(-8);
+  const pick = (from: string[]) => from[Math.floor(random() * from.length)];
+  const pattern = (length: number, from: string[]) => {
+    let out = pick(fresh);
+    while (out.length < length) out += pick(from);
+    return out;
+  };
+  const singles = Array.from({ length: 4 }, (_, i) => fresh[i % fresh.length]);
+  const mixed = old.length ? [...fresh, ...fresh, ...old] : fresh;
+  return [
+    ...singles,
+    pattern(2, fresh),
+    pattern(2, fresh),
+    pattern(3, fresh),
+    pattern(3, mixed),
+    pattern(3, mixed),
+    pattern(4, mixed),
+  ];
+}
+export const tools = [
+  { id: "starter", name: "Trusty pick", cost: 0, color: "#a9c2c5" },
+  { id: "copper", name: "Copper pick", cost: 30, color: "#e39a6c" },
+  { id: "jade", name: "Jade pick", cost: 60, color: "#7fd896" },
+  { id: "gold", name: "Golden pick", cost: 100, color: "#ffd257" },
+  { id: "amethyst", name: "Amethyst pick", cost: 150, color: "#c99bf2" },
+  { id: "diamond", name: "Diamond pick", cost: 220, color: "#8fe9ff" },
+];
+/** Camp stickers. x, y and size are percentages of the camp picture. */
 export const decorations = [
-  {
-    id: "light",
-    name: "Lighting",
-    choices: [
-      { id: "lantern", name: "Little lantern", icon: "🏮", cost: 2 },
-      { id: "stars", name: "Star lights", icon: "✨", cost: 4 },
-    ],
-  },
-  {
-    id: "plant",
-    name: "Garden",
-    choices: [
-      { id: "fern", name: "Little fern", icon: "🌿", cost: 2 },
-      { id: "tree", name: "Cherry tree", icon: "🌸", cost: 4 },
-    ],
-  },
-  {
-    id: "pet",
-    name: "Companion",
-    choices: [
-      { id: "snail", name: "Snail buddy", icon: "🐌", cost: 2 },
-      { id: "fox", name: "Fox friend", icon: "🦊", cost: 4 },
-    ],
-  },
-  {
-    id: "home",
-    name: "Shelter",
-    choices: [
-      { id: "tent", name: "Cozy tent", icon: "⛺", cost: 2 },
-      { id: "cabin", name: "Woodland cabin", icon: "🏡", cost: 4 },
-    ],
-  },
-  {
-    id: "display",
-    name: "Collection",
-    choices: [
-      { id: "rock", name: "Rock garden", icon: "🪨", cost: 2 },
-      { id: "crystal", name: "Crystal display", icon: "💎", cost: 4 },
-    ],
-  },
-  {
-    id: "flag",
-    name: "Camp marker",
-    choices: [
-      { id: "flag", name: "Adventure flag", icon: "🚩", cost: 2 },
-      { id: "rainbow", name: "Rainbow arch", icon: "🌈", cost: 4 },
-    ],
-  },
+  { id: "fern", name: "Little fern", cost: 15, x: 12, y: 86, size: 8 },
+  { id: "lantern", name: "Lantern", cost: 15, x: 39, y: 70, size: 6 },
+  { id: "snail", name: "Snail buddy", cost: 20, x: 50, y: 90, size: 7 },
+  { id: "flag", name: "Adventure flag", cost: 20, x: 58, y: 58, size: 9 },
+  { id: "campfire", name: "Campfire", cost: 30, x: 64, y: 82, size: 11 },
+  { id: "crystals", name: "Crystal pile", cost: 30, x: 25, y: 84, size: 8 },
+  { id: "fox", name: "Fox friend", cost: 40, x: 76, y: 86, size: 9 },
+  { id: "starlights", name: "Star lights", cost: 40, x: 46, y: 52, size: 16 },
+  { id: "cherrytree", name: "Cherry tree", cost: 50, x: 31, y: 56, size: 15 },
+  { id: "chest", name: "Treasure chest", cost: 50, x: 37, y: 88, size: 9 },
+  { id: "cabin", name: "Log cabin", cost: 70, x: 70, y: 58, size: 15 },
+  { id: "rainbow", name: "Rainbow", cost: 80, x: 52, y: 24, size: 26 },
 ];
 export const normalize = (word: string) =>
   word.replace(/[‘’]/g, "'").toLowerCase();
@@ -237,5 +230,5 @@ export function parseWords(text: string) {
   ];
 }
 export function fingerFor(key: string) {
-  return fingerForKey(key)?.name ?? "Find the highlighted key";
+  return fingerForKey(key)?.name ?? "";
 }

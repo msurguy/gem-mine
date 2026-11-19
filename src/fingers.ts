@@ -17,14 +17,14 @@ export const fingers = [
   },
   {
     id: "li",
-    name: "Left index finger",
+    name: "Left pointer finger",
     home: "f",
     keys: "45rtfgvb",
     color: "#5b9f99",
   },
   {
     id: "ri",
-    name: "Right index finger",
+    name: "Right pointer finger",
     home: "j",
     keys: "67yuhjnm",
     color: "#5b9f99",
@@ -50,67 +50,8 @@ export const fingers = [
     keys: "0-=p[]\\;'/",
     color: "#bc7391",
   },
-  { id: "thumb", name: "Either thumb", home: " ", keys: " ", color: "#8d81b2" },
+  { id: "thumb", name: "Thumb", home: " ", keys: " ", color: "#8d81b2" },
 ];
-export const fingerLessons = [
-  {
-    id: "anchors",
-    title: "Find your anchors",
-    description: "Feel the bumps on F and J with your index fingers.",
-    keys: ["f", "j", "f", "j", "f", "j"],
-  },
-  {
-    id: "home",
-    title: "A home for every finger",
-    description:
-      "Left hand: A S D F. Right hand: J K L ;. Thumbs float over Space.",
-    keys: ["a", "s", "d", "f", "j", "k", "l", ";", " "],
-  },
-  {
-    id: "reach",
-    title: "Reach & come home",
-    description:
-      "Move one finger, tap the key, then bring it back to its home.",
-    keys: [
-      "r",
-      "u",
-      "e",
-      "i",
-      "w",
-      "o",
-      "q",
-      "p",
-      "g",
-      "h",
-      "v",
-      "m",
-      "'",
-      " ",
-    ],
-  },
-  {
-    id: "numbers",
-    title: "Number tunnels",
-    description: "Reach up to the number row, then bring your finger home.",
-    keys: [..."1234567890"],
-  },
-  {
-    id: "symbols",
-    title: "Secret symbols",
-    description: "Use your right hand to find the punctuation keys.",
-    keys: [...",./;'[]-="],
-  },
-];
-export interface FingerPractice {
-  lessonId: string;
-  step: number;
-  completed: string[];
-}
-export const initialFingerPractice = (): FingerPractice => ({
-  lessonId: "anchors",
-  step: 0,
-  completed: [],
-});
 export const fingerForKey = (key: string) =>
   fingers.find((f) => f.keys.includes(key.toLowerCase()));
 export const keyLabel = (key: string) =>
@@ -122,35 +63,3 @@ export const keyPosition = (key: string) => {
   const k = keyboardKeys.find((k) => k.key === key)!;
   return { x: k.x + k.w / 2, y: k.y + 25 };
 };
-export function isFingerPractice(value: unknown): value is FingerPractice {
-  if (!value || typeof value !== "object") return false;
-  const p = value as FingerPractice,
-    lesson = fingerLessons.find((l) => l.id === p.lessonId);
-  return (
-    !!lesson &&
-    Number.isInteger(p.step) &&
-    p.step >= 0 &&
-    p.step <= lesson.keys.length &&
-    Array.isArray(p.completed) &&
-    p.completed.length <= fingerLessons.length &&
-    new Set(p.completed).size === p.completed.length &&
-    p.completed.every((id) => fingerLessons.some((l) => l.id === id))
-  );
-}
-export function acceptsFingerKey(e: {
-  key: string;
-  repeat: boolean;
-  ctrlKey: boolean;
-  metaKey: boolean;
-  altKey: boolean;
-  isComposing?: boolean;
-}) {
-  return (
-    !e.repeat &&
-    !e.ctrlKey &&
-    !e.metaKey &&
-    !e.altKey &&
-    !e.isComposing &&
-    !!fingerForKey(e.key)
-  );
-}

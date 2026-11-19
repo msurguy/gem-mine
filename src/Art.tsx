@@ -1,5 +1,5 @@
 export function Gem({
-  color = "#a3dbbd",
+  color = "#5ee6c8",
   size = 26,
 }: {
   color?: string;
@@ -7,21 +7,77 @@ export function Gem({
 }) {
   return (
     <svg
+      className="gem-icon"
       width={size}
       height={size}
       viewBox="0 0 40 40"
       fill="none"
       aria-hidden="true"
     >
-      <path d="m5 14 8-9h14l8 9-15 22Z" fill={color} />
+      <path
+        d="m5 14 8-9h14l8 9-15 22Z"
+        fill={color}
+        stroke="#0c3b4a"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
       <path
         d="m5 14 15 22-6-22 6-9 6 9-6 22 15-22Z"
         fill="none"
-        stroke="#173e37"
-        strokeOpacity=".45"
-        strokeWidth="1.8"
+        stroke="#0c3b4a"
+        strokeOpacity=".35"
+        strokeWidth="1.5"
       />
-      <path d="M5 14h30" stroke="white" strokeOpacity=".45" />
+      <path d="m13 6-5 7h8l4-7Z" fill="white" fillOpacity=".55" />
+    </svg>
+  );
+}
+export function Star({
+  on = true,
+  size = 30,
+}: {
+  on?: boolean;
+  size?: number;
+}) {
+  return (
+    <svg
+      className={`star ${on ? "on" : "off"}`}
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      aria-hidden="true"
+    >
+      <path
+        d="M20 3.5 25 14l11.500 1.500-8.400 8 2.100 11.400L20 29.400 9.800 34.900l2.100-11.400-8.400-8L15 14Z"
+        fill={on ? "#ffd23f" : "#ffffff"}
+        fillOpacity={on ? 1 : 0.22}
+        stroke={on ? "#a0620a" : "#ffffff"}
+        strokeOpacity={on ? 1 : 0.5}
+        strokeWidth="2.500"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+export function Stars({ count, size = 22 }: { count: number; size?: number }) {
+  return (
+    <span className="stars" role="img" aria-label={`${count} of 3 stars`}>
+      {[1, 2, 3].map((n) => (
+        <Star key={n} on={n <= count} size={size} />
+      ))}
+    </span>
+  );
+}
+export function Bolt({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <path
+        d="M23 3 8 23h9l-2 14 16-21h-9Z"
+        fill="#ffd23f"
+        stroke="#a0620a"
+        strokeWidth="2.500"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -63,8 +119,45 @@ export function Pickaxe({
     </svg>
   );
 }
-export function Miner() {
-  return <img className="miner" src="./art/miner.webp" alt="" />;
+export type Pose =
+  | "wave"
+  | "cheer"
+  | "think"
+  | "swing"
+  | "drill-side"
+  | "drill-down"
+  | "drill-up";
+export function Miner({
+  pose = "wave",
+  className = "",
+}: {
+  pose?: Pose;
+  className?: string;
+}) {
+  return (
+    <img
+      className={`miner ${className}`}
+      src={`./art/miner-${pose}.webp`}
+      alt=""
+      draggable={false}
+    />
+  );
+}
+export function Sticker({
+  id,
+  className = "",
+}: {
+  id: string;
+  className?: string;
+}) {
+  return (
+    <img
+      className={`sticker ${className}`}
+      src={`./art/stickers/${id}.svg`}
+      alt=""
+      draggable={false}
+    />
+  );
 }
 export function Rock({ fraction = 0 }: { fraction?: number }) {
   return (
@@ -73,8 +166,8 @@ export function Rock({ fraction = 0 }: { fraction?: number }) {
       {fraction > 0 && (
         <path
           d="m201 91-14 34 25 22-19 30 11 37m7-67 28-15 14 8m-60 36-27 5-11 21"
-          stroke="#8bf2f3"
-          strokeWidth="4"
+          stroke="#eaffff"
+          strokeWidth="5"
           fill="none"
           strokeLinecap="round"
           opacity={0.5 + fraction * 0.5}
@@ -83,9 +176,10 @@ export function Rock({ fraction = 0 }: { fraction?: number }) {
       {fraction > 0.45 && (
         <path
           d="m187 125-38-9-21 12m76 86 31 12 13 22m-9-116 13-25 29-7"
-          stroke="#8bf2f3"
-          strokeWidth="4"
+          stroke="#eaffff"
+          strokeWidth="5"
           fill="none"
+          strokeLinecap="round"
         />
       )}
     </svg>

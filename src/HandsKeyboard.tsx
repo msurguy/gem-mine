@@ -196,22 +196,17 @@ function MinerHand({
 export function HandsKeyboard({
   target,
   phase,
-  full,
-  className = "hands-keyboard",
-  onClick,
+  wrong,
 }: {
   target: string;
   phase: Phase;
-  full: boolean;
-  className?: string;
-  onClick?: () => void;
+  wrong?: string;
 }) {
   const owner = fingerForKey(target)!;
   return (
     <svg
-      className={className}
-      onClick={onClick}
-      viewBox={full ? "-18 -88 1410 443" : "-18 -12 935 365"}
+      className="keyboard with-hands"
+      viewBox="-18 -46 935 399"
       role="img"
       aria-labelledby="hands-title hands-desc"
     >
@@ -235,13 +230,8 @@ export function HandsKeyboard({
           <stop stopColor="#459e9b" />
           <stop offset="1" stopColor="#216575" />
         </linearGradient>
-        <clipPath id="keyboard-frame">
-          <rect x="-10" y="-82" width={full ? 1400 : 912} height="400" />
-        </clipPath>
       </defs>
-      <g clipPath="url(#keyboard-frame)">
-        <KeyFaces target={target} />
-      </g>
+      <KeyFaces target={target} wrong={wrong} />
       {(owner.id.startsWith("r") ? [false, true] : [true, false]).map(
         (right) => (
           <MinerHand

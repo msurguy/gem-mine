@@ -1,4 +1,4 @@
-// A US ANSI desktop keyboard, measured in units of one square key.
+// The main block of a US ANSI keyboard, measured in units of one square key.
 type KeySpec = string | [string, number, number?];
 export interface Keycap {
   key: string;
@@ -24,10 +24,6 @@ function row(y: number, start: number, entries: KeySpec[]): Keycap[] {
   });
 }
 export const keycaps = [
-  ...row(-1.2, 0, ["Esc"]),
-  ...row(-1.2, 2, ["F1", "F2", "F3", "F4"]),
-  ...row(-1.2, 6.5, ["F5", "F6", "F7", "F8"]),
-  ...row(-1.2, 11, ["F9", "F10", "F11", "F12"]),
   ...row(0, 0, [..."`1234567890-=", ["Backspace", 2]]),
   ...row(1, 0, [["Tab", 1.5], ..."qwertyuiop[]", ["\\", 1.5]]),
   ...row(2, 0, [["Caps Lock", 1.75], ..."asdfghjkl;'", ["Enter", 2.25]]),
@@ -42,14 +38,4 @@ export const keycaps = [
     ["Menu", 1.25],
     ["Ctrl", 1.25],
   ]),
-  ...row(-1.2, 15.45, ["PrtSc", "ScrLk", "Pause"]),
-  ...row(0, 15.45, ["Ins", "Home", "PgUp"]),
-  ...row(1, 15.45, ["Del", "End", "PgDn"]),
-  ...row(3, 16.45, ["↑"]),
-  ...row(4, 15.45, ["←", "↓", "→"]),
-  ...row(0, 18.9, ["Num", "/", "*", "-"]),
-  ...row(1, 18.9, ["7", "8", "9", ["+", 1, 2]]),
-  ...row(2, 18.9, ["4", "5", "6"]),
-  ...row(3, 18.9, ["1", "2", "3", ["Enter", 1, 2]]),
-  ...row(4, 18.9, [["0", 2], "."]),
 ];

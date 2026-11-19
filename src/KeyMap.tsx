@@ -1,24 +1,40 @@
 import { keycaps } from "./keyboardLayout";
 import { fingerForKey, keyLabel } from "./fingers";
 
-export function KeyFaces({ target }: { target?: string }) {
+export function KeyFaces({
+  target,
+  wrong,
+}: {
+  target?: string;
+  /** A key that was just pressed by mistake; it flashes red. */
+  wrong?: string;
+}) {
   return (
     <>
       {keycaps.map(({ key, x, y, w, h }) => {
-        const finger =
-          key.length === 1 && x < 900 ? fingerForKey(key) : undefined;
+        const finger = key.length === 1 ? fingerForKey(key) : undefined;
         const selected = !!finger && key === target;
+        const missed = !!finger && !selected && key === wrong;
         return (
           <g
             key={x + ":" + y}
             data-key={key}
+            className={selected ? "key-target" : missed ? "key-wrong" : ""}
             transform={`translate(${x} ${y})`}
           >
             <rect
               width={w}
               height={h}
               rx="7"
-              fill={selected ? "#fcc84b" : finger ? "#dce9ee" : "#586483"}
+              fill={
+                selected
+                  ? "#ffd23f"
+                  : missed
+                    ? "#ff8a80"
+                    : finger
+                      ? "#eef4f7"
+                      : "#5b678a"
+              }
             />
             {finger && (
               <rect
@@ -49,24 +65,19 @@ export function KeyFaces({ target }: { target?: string }) {
 }
 export default function KeyMap({
   target,
-  onClick,
+  wrong,
 }: {
   target?: string;
-  onClick: () => void;
+  wrong?: string;
 }) {
   return (
     <svg
-      className="full-key-map"
-      viewBox="-10 -82 1390 389"
+      className="keyboard"
+      viewBox="-6 -6 912 306"
       role="img"
-      aria-label={
-        target
-          ? `Full US keyboard. Find ${keyLabel(target)}.`
-          : "Full US keyboard"
-      }
-      onClick={onClick}
+      aria-label={target ? `Keyboard. Find ${keyLabel(target)}.` : "Keyboard"}
     >
-      <KeyFaces target={target} />
+      <KeyFaces target={target} wrong={wrong} />
     </svg>
   );
 }

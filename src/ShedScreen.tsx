@@ -5,6 +5,7 @@ import { drillReady } from "./game";
 import type { Action, ProgressV2 } from "./game";
 import { DRILL_CHARGE, DRILL_COST, lootByLevel, treasures } from "./dig";
 import { Gem, Pickaxe, Sticker } from "./Art";
+import { sfx } from "./audio";
 
 const shelves = [
   { kind: "ore", name: "Ores" },
@@ -34,7 +35,8 @@ export default function ShedScreen({
   onMap: () => void;
 }) {
   const { drill, gems, finds } = progress,
-    ready = drillReady(progress);
+    ready = drillReady(progress),
+    sound = progress.settings.sound;
   const kinds = treasures.filter((t) => finds[t.id]).length;
   return (
     <div className="shed">
@@ -53,7 +55,10 @@ export default function ShedScreen({
                 className="chunky go"
                 disabled={gems < DRILL_COST}
                 aria-label={`Buy the drill for ${DRILL_COST} gems`}
-                onClick={() => dispatch({ type: "drill" })}
+                onClick={() => {
+                  if (sound) sfx("buy");
+                  dispatch({ type: "drill" });
+                }}
               >
                 <Price cost={DRILL_COST} gems={gems} />
               </button>
@@ -115,7 +120,10 @@ export default function ShedScreen({
                         ? `Use ${t.name}`
                         : `Buy ${t.name} for ${t.cost} gems`
                     }
-                    onClick={() => dispatch({ type: "tool", id: t.id })}
+                    onClick={() => {
+                      if (sound) sfx(owned ? "equip" : "buy");
+                      dispatch({ type: "tool", id: t.id });
+                    }}
                   >
                     {owned ? "Use" : <Price cost={t.cost} gems={gems} />}
                   </button>

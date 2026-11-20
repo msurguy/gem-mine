@@ -24,11 +24,19 @@ import {
   levelOfRow,
   lootAt,
   swing,
+  swingsFor,
 } from "./dig";
 import type { Facing, Treasure } from "./dig";
-import { chime } from "./audio";
+import { sfx } from "./audio";
+import type { Sfx } from "./audio";
 import { Bolt, Gem, Miner, Sticker } from "./Art";
 
+/** Shinier, rarer finds sound bigger. */
+function findSound(id: string, kind: Treasure["kind"]): Sfx {
+  if (id === "coin" || id === "gold") return "find-coin";
+  if (kind === "ancient") return "find-ancient";
+  return kind === "gem" ? "find-gem" : "find-common";
+}
 /** Rows of the dig visible at once. */
 const VIEW_ROWS = 7;
 const arrows: Record<string, Facing> = {
@@ -78,18 +86,35 @@ export default function DigScreen({
     if (out.kind === "nothing") return;
     setSwings(swings + 1);
     if (out.kind === "too-hard" || out.kind === "no-energy") {
-      if (sound) chime("miss");
+      if (sound) sfx(out.kind);
       return setNote({ kind: out.kind, n });
     }
+    if (sound) {
+      const stone = swingsFor(facing!.y, false) > 1;
+      sfx(
+        out.kind === "crack"
+          ? "crack"
+          : drill
+            ? "drill"
+            : stone
+              ? "dig-stone"
+              : "dig-earth",
+      );
+      if (out.kind === "broke" && out.loot) {
+        const { id, kind } = out.loot,
+          fresh = !progress.finds[id];
+        sfx(findSound(id, kind));
+        if (fresh) sfx(kind === "ancient" ? "find-new-ancient" : "find-new");
+      }
+    }
     if (out.kind === "broke" && out.loot) {
-      if (sound) chime("find");
       setNote({
         kind: "find",
         treasure: out.loot,
         fresh: !progress.finds[out.loot.id],
         n,
       });
-    } else if (sound) chime("dig");
+    }
     dispatch({ type: "dig-swing" });
   }
   useEffect(() => {

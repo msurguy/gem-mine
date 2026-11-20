@@ -4,6 +4,7 @@ import { decorations } from "./curriculum";
 import type { Action, ProgressV2 } from "./game";
 import { Miner, Sticker } from "./Art";
 import { Price } from "./ShedScreen";
+import { sfx } from "./audio";
 
 export default function CampScreen({
   progress,
@@ -52,7 +53,10 @@ export default function CampScreen({
                   className="chunky small go"
                   disabled={progress.gems < d.cost}
                   aria-label={`Buy ${d.name} for ${d.cost} gems`}
-                  onClick={() => dispatch({ type: "decoration", id: d.id })}
+                  onClick={() => {
+                    if (progress.settings.sound) sfx("buy-sticker");
+                    dispatch({ type: "decoration", id: d.id });
+                  }}
                 >
                   <Price cost={d.cost} gems={progress.gems} />
                 </button>

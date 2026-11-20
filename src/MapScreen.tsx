@@ -12,6 +12,8 @@ import type { WordList } from "./curriculum";
 import { isUnlocked, nextLevel } from "./game";
 import type { ProgressV2 } from "./game";
 import { Bolt, Miner, Stars } from "./Art";
+import { sfx } from "./audio";
+import type { Sfx } from "./audio";
 
 /** Where the six stones of a world sit on its picture, as percentages. */
 const spots = [
@@ -35,7 +37,8 @@ export default function MapScreen({
   onDig: () => void;
 }) {
   const next = nextLevel(progress),
-    resume = progress.active;
+    resume = progress.active,
+    play = (kind: Sfx) => progress.settings.sound && sfx(kind);
   const [worldIndex, setWorldIndex] = useState(() =>
       worlds.findIndex((w) => w.id === next.world),
     ),
@@ -65,7 +68,10 @@ export default function MapScreen({
             className="round"
             aria-label="Previous cave"
             disabled={worldIndex === 0}
-            onClick={() => setWorldIndex(worldIndex - 1)}
+            onClick={() => {
+              play("map-slide");
+              setWorldIndex(worldIndex - 1);
+            }}
           >
             <ChevronLeft size={28} />
           </button>
@@ -88,7 +94,10 @@ export default function MapScreen({
             className="round"
             aria-label="Next cave"
             disabled={worldIndex === worlds.length - 1}
-            onClick={() => setWorldIndex(worldIndex + 1)}
+            onClick={() => {
+              play("map-slide");
+              setWorldIndex(worldIndex + 1);
+            }}
           >
             <ChevronRight size={28} />
           </button>
@@ -155,7 +164,10 @@ export default function MapScreen({
               className="round small"
               aria-label="Newer words"
               disabled={listIndex === 0}
-              onClick={() => setListIndex(listIndex - 1)}
+              onClick={() => {
+                play("page-turn");
+                setListIndex(listIndex - 1);
+              }}
             >
               <ChevronLeft size={22} />
             </button>
@@ -166,7 +178,10 @@ export default function MapScreen({
               className="round small"
               aria-label="Older words"
               disabled={listIndex >= choices.length - 1}
-              onClick={() => setListIndex(listIndex + 1)}
+              onClick={() => {
+                play("page-turn");
+                setListIndex(listIndex + 1);
+              }}
             >
               <ChevronRight size={22} />
             </button>

@@ -16,7 +16,7 @@ import {
   loadProgress,
   saveProgress,
 } from "./persistence";
-import { stopSpeech } from "./audio";
+import { preloadSfx, sfx, stopSpeech } from "./audio";
 import { Bolt, Gem } from "./Art";
 import MapScreen from "./MapScreen";
 import PlayScreen from "./PlayScreen";
@@ -65,6 +65,17 @@ export default function App() {
     }
   }, [progress, corrupt]);
   useEffect(() => stopSpeech, [screen]);
+  // Sounds load on the first touch or key, when the browser lets audio start.
+  useEffect(() => {
+    if (!progress.settings.sound) return;
+    const start = () => preloadSfx();
+    window.addEventListener("pointerdown", start, { once: true });
+    window.addEventListener("keydown", start, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", start);
+      window.removeEventListener("keydown", start);
+    };
+  }, [progress.settings.sound]);
   const exportSave = () =>
     download(
       "gem-mine-backup.json",
@@ -164,12 +175,13 @@ export default function App() {
               </span>
               <button
                 className="round"
-                onClick={() =>
+                onClick={() => {
+                  sfx(progress.settings.sound ? "sound-off" : "sound-on");
                   dispatch({
                     type: "settings",
                     settings: { sound: !progress.settings.sound },
-                  })
-                }
+                  });
+                }}
                 aria-label={
                   progress.settings.sound ? "Turn sound off" : "Turn sound on"
                 }

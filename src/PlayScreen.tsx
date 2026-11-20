@@ -15,7 +15,8 @@ import { GEMS_PER_STAR, drillReady, isUnlocked, nextLevel } from "./game";
 import type { Action, ProgressV2 } from "./game";
 import { DRILL_CHARGE, ENERGY_PER_ROCK } from "./dig";
 import { fingerForKey, keyLabel } from "./fingers";
-import { chime, say, stopSpeech } from "./audio";
+import { say, sfx, stopSpeech } from "./audio";
+import type { Sfx } from "./audio";
 import { Bolt, Gem, Miner, Pickaxe, Rock, Star } from "./Art";
 import { HandsKeyboard } from "./HandsKeyboard";
 import type { Phase } from "./HandsKeyboard";
@@ -87,6 +88,7 @@ export default function PlayScreen({
     misses: run?.misses ?? 0,
     rocks: progress.rocks,
     result: result?.id,
+    drill: drillReady(progress),
   });
   useEffect(() => {
     const s = seen.current,
@@ -95,12 +97,16 @@ export default function PlayScreen({
         misses: run?.misses ?? s.misses,
         rocks: progress.rocks,
         result: result?.id,
+        drill: drillReady(progress),
       };
     if (sound) {
-      if (now.result && now.result !== s.result) chime("win");
-      else if (now.rocks > s.rocks) chime("complete");
-      else if (now.hits > s.hits) chime("hit");
-      else if (now.misses > s.misses) chime("miss");
+      if (now.rocks > s.rocks) sfx("rock");
+      else if (now.hits > s.hits) sfx("hit");
+      else if (now.misses > s.misses) sfx(spelling ? "wrong-word" : "miss");
+      if (result && now.result !== s.result) {
+        sfx(result.stars === 3 ? "win-perfect" : "win");
+        if (now.drill && !s.drill) sfx("drill-ready");
+      }
     }
     seen.current = now;
   }, [run?.hits, run?.misses, progress.rocks, result?.id, sound]);
@@ -138,7 +144,9 @@ export default function PlayScreen({
     return stopSpeech;
   }, [spelling, run?.id, run?.index]);
 
+  const play = (kind: Sfx) => sound && sfx(kind);
   function miss(key: string) {
+    if (intro >= 0) play("miss");
     setWrong({ key, n: wrong.n + 1 });
   }
   useEffect(() => {
@@ -154,7 +162,7 @@ export default function PlayScreen({
         e.preventDefault();
         if (e.repeat) return;
         if (key !== level!.newKeys[intro]) return miss(key);
-        if (sound) chime("hit");
+        play(`new-key-${Math.min(intro + 1, 5)}` as Sfx);
         setWrong({ key: "", n: wrong.n });
         setIntro(intro + 1 < level!.newKeys.length ? intro + 1 : -1);
         return;
@@ -165,11 +173,13 @@ export default function PlayScreen({
           if (!e.repeat) submit();
         } else if (e.key === "Backspace") {
           e.preventDefault();
+          if (run.typed) play("erase");
           dispatch({ type: "spell-input", value: run.typed.slice(0, -1) });
         } else if (/^[a-z']$/.test(key)) {
           e.preventDefault();
-          if (!e.repeat)
-            dispatch({ type: "spell-input", value: run.typed + e.key });
+          if (e.repeat) return;
+          play("letter");
+          dispatch({ type: "spell-input", value: run.typed + e.key });
         }
         return;
       }
@@ -336,6 +346,7 @@ export default function PlayScreen({
                     className="chunky quiet"
                     onClick={(e) => {
                       e.currentTarget.blur();
+                      play("hint");
                       dispatch({ type: "hint" });
                     }}
                   >

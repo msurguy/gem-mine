@@ -944,12 +944,6 @@ main[data-screen] h2 small {
 .key-wrong rect:first-child {
   animation: blink 0.35s 2;
 }
-.hand-outline {
-  transition: d 0.45s ease;
-}
-.hand-joint {
-  transition: transform 0.45s ease;
-}
 
 /* ---------- Dig ---------- */
 .shaft {

@@ -2,6 +2,8 @@
 
 Gem Mine is an illustrated typing adventure for young learners. Kids follow a map of short key lessons, type their school spelling words, dig for treasure, and decorate a camp with what they earn. There are no accounts, no tracking, no backend and no timers. Everything stays in the browser.
 
+**[Play it at msurguy.github.io/gem-mine](https://msurguy.github.io/gem-mine/)**
+
 ![The map: Mossy Hollow, with a trail of key lessons and the week's school words](docs/screenshots/map.jpg)
 
 ## Screenshots

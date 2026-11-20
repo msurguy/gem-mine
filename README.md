@@ -144,10 +144,56 @@ React, TypeScript and Vite, with no backend.
 
 Accessibility: native controls, a keyboard-only path through every screen, on-screen buttons for the dig, visible focus, text alternatives, a sound toggle, and both system and in-game reduced motion.
 
+## How the assets were made
+
+Every generated asset has a script in `scripts/` that lists the exact prompts. Each script reads its API key from an environment variable, skips files it has already made (so a rerun only retries failures), and never writes keys or paths to disk. API calls cost money, and the models give a different result each time, so rerunning a script makes new versions rather than exact copies.
+
+| Asset                                   | Where it lives                  | Made with                                                                                   | Script                                      |
+| --------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Cave backgrounds                        | `public/art/bg-*.jpg`           | OpenAI Images (`gpt-image-2.6-sunburst`), editing `crystal-grotto.jpg` so the style matches | `generate-art.sh`                           |
+| Miner poses                             | `public/art/miner-*.webp`       | OpenAI Images, editing the miner illustration so the character stays the same               | `generate-art.sh`                           |
+| Miner with the drill                    | `public/art/miner-drill-*.webp` | OpenAI Images, with the miner and the drill sticker as two references                       | `generate-art.sh`, `rasterize-svg.mjs`      |
+| Stickers (camp items, treasures, drill) | `public/art/stickers/*.svg`     | [Quiver](https://quiver.ai) SVG generation (`arrow-2`), then cleaned and touched up by hand | `generate-stickers.sh`, `clean-stickers.py` |
+| Spoken spelling words                   | `public/audio/words/*.mp3`      | OpenAI text-to-speech (`gpt-4o-mini-tts`, voice `marin`), trimmed with ffmpeg               | `generate-word-audio.mjs`                   |
+| Sound effects                           | `public/audio/sfx/*.mp3`        | SFX Kit, CC0. Not generated                                                                 | —                                           |
+
+The starting illustrations (`crystal-grotto.jpg`, `gem-rock.webp`, `miners-camp.jpg` and the first miner) are not made by these scripts; the scripts build on them.
+
+### Painted art
+
+```sh
+OPENAI_API_KEY=... scripts/generate-art.sh            # raw images into art-raw/
+OPENAI_API_KEY=... scripts/generate-art.sh --install  # also convert and copy into public/art
+```
+
+Every prompt shares one paragraph that pins down the style (or the character), followed by a line that describes the new cave or pose. Backgrounds come out at 1536×864 as JPEG. Poses come out as transparent PNGs and are resized to WebP with `cwebp`. The drill poses use the drill sticker as a second reference, rendered to a PNG with Playwright.
+
+### Stickers
+
+```sh
+QUIVER_API_KEY=... scripts/generate-stickers.sh   # raw SVGs into stickers-raw/
+python3 scripts/clean-stickers.py                 # clean and copy into public/art/stickers
+```
+
+Each sticker is a short prompt plus a shared instruction: flat cartoon, navy outline, white die-cut border, no background, plain paths only, on a 256×256 viewBox. Each one takes about 5,000 to 12,000 output tokens. Quiver often adds a translucent background rectangle and tiny off-white specks; `clean-stickers.py` removes both. Check the results by eye afterwards.
+
+### Spoken words
+
+```sh
+OPENAI_API_KEY=... node scripts/generate-word-audio.mjs          # every word without a clip
+OPENAI_API_KEY=... node scripts/generate-word-audio.mjs because  # redo one word
+```
+
+The script collects the words from `src/curriculum.ts` and `scripts/spelling-words.txt`, asks for each one to be read slowly and clearly to a young child, retries takes that come back nearly empty, and trims the silence with ffmpeg.
+
+### Screenshots and previews
+
+The screenshots in `docs/screenshots` and the social preview in `docs/social-preview.jpg` (also `public/social-preview.jpg`, used for link previews) were taken from the running game with Playwright.
+
 ## Credits
 
-- Painted cave backgrounds and the miner poses were generated with the OpenAI Images API by editing the original cave and miner art (`scripts/generate-art.sh`). The sticker-style SVGs in `public/art/stickers` were generated with [Quiver](https://quiver.ai) (`scripts/generate-stickers.sh`), cleaned with `scripts/clean-stickers.py`, then touched up by hand. Both scripts read the API key from an environment variable and list every prompt used.
-- Spoken words in `public/audio/words` were recorded with OpenAI text-to-speech.
+- Cave backgrounds and miner poses were generated with the OpenAI Images API, and the stickers with [Quiver](https://quiver.ai). See [How the assets were made](#how-the-assets-were-made).
+- Spoken words in `public/audio/words` were generated with OpenAI text-to-speech.
 - Sound effects in `public/audio/sfx` are from SFX Kit, released under [CC0](public/audio/sfx/LICENSE.txt).
 - Icons are from [Lucide](https://lucide.dev). Fonts are Fredoka and Nunito from Google Fonts.
 

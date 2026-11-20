@@ -107,7 +107,7 @@ Assets use relative paths, so a repository subpath works, and all screens are in
 
 Use **Grown-ups → Add a week of words** to add lists (1–100 words, letters and apostrophes, up to 32 characters each). They are stored in the browser and included in backups.
 
-To change the built-in weeks, edit `schoolLists` in `src/curriculum.ts`. Built-in words and the 1,284 common elementary spelling words in `scripts/spelling-words.txt` play recorded clips from `public/audio/words`. After adding words to either, record the new ones with:
+The game comes with eight sample weeks (short vowels, silent e, blends, digraphs, vowel teams, bossy r, contractions and tricky words). To replace them with your own class's lists, edit `schoolLists` in `src/curriculum.ts`. Built-in words and the 1,284 common elementary spelling words in `scripts/spelling-words.txt` play recorded clips from `public/audio/words`. After adding words to either, record the new ones with:
 
 ```sh
 OPENAI_API_KEY=... node scripts/generate-word-audio.mjs

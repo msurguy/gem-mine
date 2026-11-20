@@ -332,6 +332,7 @@ test("fits a small laptop and a narrow window without sideways scrolling", async
   for (const size of [
     { width: 1024, height: 680 },
     { width: 430, height: 820 },
+    { width: 375, height: 740 },
   ]) {
     await page.setViewportSize(size);
     await page.goto("./");
@@ -346,6 +347,26 @@ test("fits a small laptop and a narrow window without sideways scrolling", async
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Dig", exact: true }).click();
     expect(await fits()).toBe(true);
+    await page.getByRole("button", { name: "About" }).click();
+    expect(await fits()).toBe(true);
     await page.evaluate(() => localStorage.clear());
   }
+});
+
+test("about page explains privacy, the source and the author", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "About" }).click();
+  await expect(
+    page.getByRole("heading", { name: "About Gem Mine" }),
+  ).toBeVisible();
+  await expect(page.getByText(/no accounts and no server/)).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Gem Mine on GitHub" }),
+  ).toHaveAttribute("href", "https://github.com/msurguy/gem-mine");
+  await expect(
+    page.getByRole("heading", { name: "Made by Maks Surguy" }),
+  ).toBeVisible();
+  await axe(page);
 });

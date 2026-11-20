@@ -7,6 +7,7 @@ import {
   Volume2,
   VolumeX,
   Users,
+  Info,
 } from "lucide-react";
 import { formatDate, keyPrompts, levels, schoolLists } from "./curriculum";
 import { initialProgress, makeRun, reducer, selectPrompts } from "./game";
@@ -24,8 +25,9 @@ import DigScreen from "./DigScreen";
 import ShedScreen from "./ShedScreen";
 import CampScreen from "./CampScreen";
 import GrownUps from "./GrownUps";
+import AboutScreen from "./AboutScreen";
 
-type Screen = "map" | "play" | "dig" | "shed" | "camp" | "grownups";
+type Screen = "map" | "play" | "dig" | "shed" | "camp" | "grownups" | "about";
 const load = () => {
   try {
     return loadProgress(window.localStorage);
@@ -199,6 +201,14 @@ export default function App() {
                 <Users size={16} />
                 Grown-ups
               </button>
+              <button
+                className={`grownups-link ${screen === "about" ? "here" : ""}`}
+                aria-current={screen === "about" ? "page" : undefined}
+                onClick={() => setScreen("about")}
+              >
+                <Info size={16} />
+                About
+              </button>
             </div>
           </header>
           <main data-screen={screen === "play" ? "map" : screen}>
@@ -228,6 +238,7 @@ export default function App() {
             {screen === "camp" && (
               <CampScreen progress={progress} dispatch={dispatch} />
             )}
+            {screen === "about" && <AboutScreen />}
             {screen === "grownups" && (
               <GrownUps
                 progress={progress}

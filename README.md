@@ -2,7 +2,7 @@
 
 Gem Mine is an illustrated typing adventure for young learners. Kids follow a map of short key lessons, type their school spelling words, dig for treasure, and decorate a camp with what they earn. There are no accounts, no tracking, no backend and no timers. Everything stays in the browser.
 
-**[Play it at msurguy.github.io/gem-mine](https://msurguy.github.io/gem-mine/)**
+**[Play it at makssurguy.com/labs/gem-mine](https://makssurguy.com/labs/gem-mine/)**
 
 ![The map: Mossy Hollow, with a trail of key lessons and the week's school words](docs/screenshots/map.jpg)
 
@@ -20,7 +20,7 @@ Gem Mine is an illustrated typing adventure for young learners. Kids follow a ma
 
 ## How the screens connect
 
-The top bar on every screen except a level goes to **Map**, **Dig**, **Toolshed**, **My camp** and **Grown-ups**. The arrows below are the shortcuts inside the screens, and the loop between typing and digging is the core of the game: typing earns gems and dig power, digging spends dig power and finds treasure, and gems buy tools and stickers.
+The top bar on every screen except a level goes to **Map**, **Dig**, **Toolshed**, **My camp**, **Grown-ups** and **About**. The arrows below are the shortcuts inside the screens, and the loop between typing and digging is the core of the game: typing earns gems and dig power, digging spends dig power and finds treasure, and gems buy tools and stickers.
 
 ```mermaid
 flowchart LR
@@ -34,6 +34,7 @@ flowchart LR
     Shed(["🧰 Toolshed<br/>drill, pickaxes, finds"])
     Camp(["⛺ My camp<br/>stickers"])
     Grown(["👪 Grown-ups<br/>stats, word lists, backups"])
+    About(["ℹ️ About<br/>privacy, source, author"])
 
     Map -- "Play / level stone /<br/>Type the words / Listen and spell" --> Intro
     Map -- "Dig for treasure" --> Dig
@@ -47,6 +48,7 @@ flowchart LR
 
     Map ~~~ Camp
     Map ~~~ Grown
+    Map ~~~ About
 ```
 
 What moves between the screens:
@@ -69,6 +71,7 @@ Everything a child needs is one click (or one press of Enter) from the map.
 - **Dig:** walk with the arrow keys and dig with Space. Each swing uses one dig power. The dig has eight depth levels with different treasure in each: ores near the top, gold, dinosaur bones and fossils from level 3, gems and petrified wood below, and ancient coins, vases, necklaces and a golden mask at the bottom. Levels 5 to 8 are hard rock that only a powered drill can cut.
 - **Toolshed:** the drill costs 100 gems and is powered by finishing 10 typing levels. Pickaxes are cosmetic. **My finds** shows every treasure dug up so far.
 - **My camp:** spend gems on stickers for the camp picture.
+- **About:** explains that progress stays in the browser, links to this repository, and credits the author.
 
 Word lists keep their capitalization, but input is case-insensitive. Apostrophes are required, and curly apostrophes count as straight ones. Words that were missed come up more often.
 
@@ -95,13 +98,13 @@ npm run test:e2e
 
 Browser tests use an installed Google Chrome and start the Vite dev server automatically. They cover complete levels, spelling, digging, the drill, purchases, reloads, backups, old and broken saves, small screens, and axe accessibility checks on every screen. Set `GEM_MINE_BASE_URL` to test an already-running server instead.
 
-## Publish on GitHub Pages
+## Host your own copy
 
-1. Fork or push this repository.
-2. In **Settings → Pages → Build and deployment**, choose **GitHub Actions**.
-3. The **Deploy Gem Mine to Pages** workflow tests, builds and deploys `dist` on every push to `main`. Run it manually from Actions if the first push happened before Pages was enabled.
+```sh
+npm run build
+```
 
-Assets use relative paths, so a repository subpath works, and all screens are in-app state, so no routing setup is needed.
+Upload `dist` to any static host. Assets use relative paths, so the game works from a subfolder (for example `/labs/gem-mine/`) as well as a domain root, and all screens are in-app state, so no routing setup is needed. The **CI** workflow typechecks, tests and builds every push and pull request.
 
 ## Your own spelling words
 
@@ -117,7 +120,7 @@ This needs ffmpeg. Words without a recording use the browser's speech synthesis,
 
 ## Progress and backups
 
-Progress saves automatically to `gem-mine:progress:v2` in the browser's local storage, including a level in progress. It belongs to the site origin, so localhost and GitHub Pages have separate saves.
+Progress saves automatically to `gem-mine:progress:v2` in the browser's local storage, including a level in progress. It belongs to the site origin, so each site the game is hosted on has its own save.
 
 In **Grown-ups**, **Export progress** downloads a versioned JSON backup, and **Import progress** shows a summary of a backup before replacing the current save. Imports are limited to 2 MB and validated first.
 

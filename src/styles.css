@@ -1388,6 +1388,20 @@ main[data-screen] h2 small {
   white-space: nowrap;
 }
 
+/* ---------- About ---------- */
+.about-page {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  align-items: start;
+}
+.about-page p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+.about-page a {
+  color: #2d5bd1;
+  font-weight: 800;
+}
+
 /* ---------- Grown-ups ---------- */
 .lede {
   color: var(--soft);
@@ -1772,6 +1786,18 @@ dialog p {
   .top-bar {
     padding: 8px 12px;
     gap: 8px;
+  }
+  .purse {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .grownups-link {
+    padding: 6px 4px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .grownups-link svg {
+    display: none;
   }
   .brand span {
     display: none;

@@ -146,7 +146,7 @@ Accessibility: native controls, a keyboard-only path through every screen, on-sc
 
 ## Credits
 
-- Painted cave backgrounds, the camp and the miner poses were generated with the OpenAI Images API. The sticker-style SVGs in `public/art/stickers` were generated with [Quiver](https://quiver.ai) and cleaned up by hand.
+- Painted cave backgrounds and the miner poses were generated with the OpenAI Images API by editing the original cave and miner art (`scripts/generate-art.sh`). The sticker-style SVGs in `public/art/stickers` were generated with [Quiver](https://quiver.ai) (`scripts/generate-stickers.sh`), cleaned with `scripts/clean-stickers.py`, then touched up by hand. Both scripts read the API key from an environment variable and list every prompt used.
 - Spoken words in `public/audio/words` were recorded with OpenAI text-to-speech.
 - Sound effects in `public/audio/sfx` are from SFX Kit, released under [CC0](public/audio/sfx/LICENSE.txt).
 - Icons are from [Lucide](https://lucide.dev). Fonts are Fredoka and Nunito from Google Fonts.

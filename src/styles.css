@@ -1759,6 +1759,19 @@ dialog p {
 }
 
 /* ---------- Smaller screens ---------- */
+/* Between phone and wide desktop, keep the places on one row and let the
+   purse wrap below them instead of stacking the places. */
+@media (min-width: 621px) and (max-width: 1340px) {
+  .top-bar nav {
+    flex: 1 0 auto;
+  }
+  .grownups-link svg {
+    display: none;
+  }
+  .purse {
+    margin-left: auto;
+  }
+}
 @media (max-width: 980px) {
   .map,
   .dig {
